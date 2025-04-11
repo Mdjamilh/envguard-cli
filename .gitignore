@@ -1,0 +1,7 @@
+/envguard
+/envguard.exe
+/dist/
+*.test
+coverage.out
+.env
+!testdata/**/.env
