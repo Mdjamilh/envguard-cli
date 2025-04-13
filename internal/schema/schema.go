@@ -184,9 +184,13 @@ func splitAnnotations(line string) []annotation {
 			break
 		}
 		arg := after
-		if i := strings.Index(after, " @"); i >= 0 {
+		switch i := strings.Index(after, " @"); {
+		case strings.HasPrefix(after, "@"):
+			// A flag with no argument, followed directly by the next annotation.
+			arg, rest = "", after
+		case i >= 0:
 			arg, rest = after[:i], after[i:]
-		} else {
+		default:
 			rest = ""
 		}
 		out = append(out, annotation{name, strings.TrimSpace(arg)})

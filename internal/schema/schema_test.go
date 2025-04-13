@@ -73,6 +73,16 @@ func TestAnnotations(t *testing.T) {
 	}
 }
 
+func TestFlagsFollowedByMoreAnnotations(t *testing.T) {
+	s, err := load(t, "# @optional @min 32 @secret\nKEY=")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v := s.Vars[0]; v.Required || v.Min == nil || *v.Min != 32 || !v.Secret {
+		t.Errorf("got %+v", v)
+	}
+}
+
 func TestPatternMayContainSpacesAndAt(t *testing.T) {
 	s, err := load(t, "# @pattern [a-z]+@example\\.com @x\nEMAIL=a@example.com")
 	if err != nil {
