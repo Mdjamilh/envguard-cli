@@ -204,6 +204,20 @@ func TestScanFindsCommittedEnvFiles(t *testing.T) {
 	}
 }
 
+func TestTypes(t *testing.T) {
+	project(t, map[string]string{".env.example": example})
+	code, out, _ := envguard(t, nil, "types")
+	if code != 0 || !strings.Contains(out, `NODE_ENV: "development" | "production" | "test";`) || !strings.Contains(out, "PORT?: string;") {
+		t.Errorf("code %d:\n%s", code, out)
+	}
+	if code, out, _ := envguard(t, nil, "types", "--out", "env.d.ts"); code != 0 || out != "Wrote env.d.ts with 3 variables.\n" {
+		t.Errorf("code %d: %q", code, out)
+	}
+	if data, err := os.ReadFile("env.d.ts"); err != nil || !strings.Contains(string(data), "interface ProcessEnv") {
+		t.Errorf("env.d.ts not written: %v", err)
+	}
+}
+
 func TestVersion(t *testing.T) {
 	if _, out, _ := envguard(t, nil, "version"); out != "envguard dev\n" {
 		t.Errorf("got %q", out)

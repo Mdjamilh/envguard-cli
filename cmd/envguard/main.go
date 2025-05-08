@@ -35,6 +35,7 @@ Usage:
   envguard diff   [--env .env] [--schema .env.example]
   envguard scan   [dir] [--no-git]
   envguard init   [--env .env] [--out .env.example] [--force]
+  envguard types  [--schema .env.example] [--out env.d.ts]
   envguard version
 
 Every command accepts --format text|json|github.
@@ -62,6 +63,8 @@ func run(args []string, stdout, stderr io.Writer, environ []string) int {
 		code, err = runScan(rest, stdout)
 	case "init":
 		code, err = runInit(rest, stdout)
+	case "types":
+		code, err = runTypes(rest, stdout)
 	case "version", "--version", "-v":
 		fmt.Fprintf(stdout, "envguard %s\n", version)
 	case "help", "--help", "-h":
@@ -310,5 +313,28 @@ func runInit(args []string, stdout io.Writer) (int, error) {
 		return 0, err
 	}
 	fmt.Fprintf(stdout, "Wrote %s with %d variables. Review the inferred @type annotations, then commit it.\n", *out, len(entries))
+	return exitOK, nil
+}
+
+func runTypes(args []string, stdout io.Writer) (int, error) {
+	fs, _ := newFlags("types")
+	schemaFile := fs.String("schema", ".env.example", "annotated example file")
+	out := fs.String("out", "", "file to write (default: print to stdout)")
+	if err := parseFlags(fs, args); err != nil {
+		return 0, err
+	}
+	s, err := loadSchema(*schemaFile)
+	if err != nil {
+		return 0, err
+	}
+	ts := generate.TypeScript(s)
+	if *out == "" {
+		_, err = io.WriteString(stdout, ts)
+		return exitOK, err
+	}
+	if err := os.WriteFile(*out, []byte(ts), 0o644); err != nil {
+		return 0, err
+	}
+	fmt.Fprintf(stdout, "Wrote %s with %d variables.\n", *out, len(s.Vars))
 	return exitOK, nil
 }
