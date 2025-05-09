@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -118,12 +119,11 @@ func parseFlags(fs *flag.FlagSet, args []string) error {
 }
 
 func readEnvFile(path string, lookup dotenv.Lookup) ([]dotenv.Entry, error) {
-	f, err := os.Open(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
-	entries, err := dotenv.Parse(f, lookup)
+	entries, err := dotenv.Parse(bytes.NewReader(data), lookup)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", path, err)
 	}
@@ -308,8 +308,12 @@ func runInit(args []string, stdout io.Writer) (int, error) {
 	} else if err != nil {
 		return 0, err
 	}
-	defer file.Close()
-	if _, err := io.WriteString(file, generate.Example(entries)); err != nil {
+	_, err = io.WriteString(file, generate.Example(entries))
+	// Close reports a failed final write, so its error matters as much as WriteString's.
+	if closeErr := file.Close(); err == nil {
+		err = closeErr
+	}
+	if err != nil {
 		return 0, err
 	}
 	fmt.Fprintf(stdout, "Wrote %s with %d variables. Review the inferred @type annotations, then commit it.\n", *out, len(entries))
