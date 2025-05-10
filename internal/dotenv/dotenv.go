@@ -116,7 +116,7 @@ func validKey(key string) bool {
 	for i, r := range key {
 		letter := r == '_' || (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z')
 		digit := r >= '0' && r <= '9'
-		if !letter && !(digit && i > 0) {
+		if !letter && (!digit || i == 0) {
 			return false
 		}
 	}

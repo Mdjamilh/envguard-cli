@@ -120,12 +120,19 @@ func Tree(root string) ([]Finding, error) {
 			}
 			return nil
 		}
+		// Files that vanish or can't be read are skipped rather than ending the scan.
 		info, err := d.Info()
-		if err != nil || !info.Mode().IsRegular() || info.Size() > maxFileSize {
+		if err != nil {
+			return nil //nolint:nilerr // skip unreadable entries
+		}
+		if !info.Mode().IsRegular() || info.Size() > maxFileSize {
 			return nil
 		}
 		data, err := os.ReadFile(path)
-		if err != nil || isBinary(data) {
+		if err != nil {
+			return nil //nolint:nilerr // skip unreadable files
+		}
+		if isBinary(data) {
 			return nil
 		}
 		rel, _ := filepath.Rel(root, path)
