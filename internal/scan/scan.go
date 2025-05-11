@@ -42,10 +42,21 @@ var rules = []rule{
 }
 
 // A password inside a connection string: scheme://user:password@host.
-var urlCredentials = regexp.MustCompile(`\b[a-zA-Z][a-zA-Z0-9+.-]*://[^/\s:@'"]+:([^/\s@'"]+)@[^\s'"]+`)
+var urlCredentials = regexp.MustCompile(`\b[a-zA-Z][a-zA-Z0-9+.-]*://([^/\s:@'"]+):([^/\s@'"]+)@[^\s'"]+`) // envguard:ignore
+
+// Throwaway passwords in local development URLs (postgres://postgres:postgres@localhost).
+var devPassword = regexp.MustCompile(`(?i)^(postgres|password|pass|secret|root|admin|example|test|dev|local|guest)$`)
 
 // NAME=value or name: "value", where the name suggests a secret.
 var assignment = regexp.MustCompile(`(?i)\b([A-Z0-9_]*(SECRET|TOKEN|PASSWORD|PASSWD|API_?KEY|PRIVATE_KEY|ACCESS_KEY)[A-Z0-9_]*)\b\s*[:=]\s*["']?([^\s"'#,;]+)`)
+
+// Escape sequences in source strings ("PORT=1\nAPI_TOKEN=...") become spaces
+// of the same width, so names aren't glued to the "n" and columns still line up.
+var sourceEscapes = strings.NewReplacer(`\n`, "  ", `\t`, "  ", `\r`, "  ")
+
+// Generated secrets use these characters (base64, hex, URL-safe tokens,
+// JWTs). Values with parentheses, backticks or the like are code.
+var tokenChars = regexp.MustCompile(`^[A-Za-z0-9+/=_.~:-]+$`)
 
 // Values that are obviously placeholders, not real secrets.
 var placeholder = regexp.MustCompile(`(?i)^(changeme|change-me|example|placeholder|dummy|test|xxx+|\*+|<.*>|\$\{.*\}|\$[A-Z_]+|your[-_].*|.*[-_]here|todo|none|null|true|false)$`)
@@ -69,19 +80,21 @@ func Line(file string, lineNo int, line string) []Finding {
 		}
 	}
 	for _, m := range urlCredentials.FindAllStringSubmatchIndex(line, -1) {
-		password := line[m[2]:m[3]]
-		if !placeholder.MatchString(password) {
-			out = append(out, Finding{file, lineNo, m[2] + 1, "Password in URL", redact(password)})
-			matched = true
+		user, password := line[m[2]:m[3]], line[m[4]:m[5]]
+		if len(password) < 4 || password == user || placeholder.MatchString(password) || devPassword.MatchString(password) {
+			continue
 		}
+		out = append(out, Finding{file, lineNo, m[4] + 1, "Password in URL", redact(password)})
+		matched = true
 	}
 	if matched {
 		return out
 	}
+	line = sourceEscapes.Replace(line)
 	for _, m := range assignment.FindAllStringSubmatchIndex(line, -1) {
 		value := line[m[6]:m[7]]
 		// URLs aren't random strings; passwords inside them are caught above.
-		if strings.Contains(value, "://") {
+		if strings.Contains(value, "://") || !tokenChars.MatchString(value) {
 			continue
 		}
 		if len(value) >= 16 && !placeholder.MatchString(value) && entropy(value) >= 3.5 {

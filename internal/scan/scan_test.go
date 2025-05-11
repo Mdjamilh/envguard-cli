@@ -44,6 +44,10 @@ func TestHighEntropyAssignments(t *testing.T) {
 	if got := Line("config.yml", 1, `  db_password: "`+secret+`"`); len(got) != 1 {
 		t.Errorf("yaml style: got %+v", got)
 	}
+	// Inside a Go string, "\n" before the name isn't part of it.
+	if got := Line("main_test.go", 1, `".env": "PORT=1\nAPI_TOKEN=`+secret+`"`); len(got) != 1 || got[0].Rule != "High-entropy value for API_TOKEN" {
+		t.Errorf("escaped newline: got %+v", got)
+	}
 }
 
 func TestPasswordsInConnectionStrings(t *testing.T) {
@@ -51,7 +55,15 @@ func TestPasswordsInConnectionStrings(t *testing.T) {
 	if len(got) != 1 || got[0].Rule != "Password in URL" || got[0].Match != "s3cr*******" {
 		t.Errorf("got %+v", got)
 	}
-	for _, line := range []string{"DATABASE_URL=postgres://app:${DB_PASSWORD}@db/app", "URL=postgres://app@db/app", "URL=https://user:changeme@example.com"} {
+	for _, line := range []string{
+		"DATABASE_URL=postgres://app:${DB_PASSWORD}@db/app",
+		"URL=postgres://app@db/app",
+		"URL=https://user:changeme@example.com",
+		"URL=postgres://postgres:postgres@localhost:5432/dev", // password equals user
+		"URL=mysql://root:root@127.0.0.1/app",
+		"URL=postgres://app:password@localhost/app", // common dev default
+		"URL=redis://u:pw@cache:6379",               // too short to be a real secret
+	} {
 		if found := Line(".env", 1, line); len(found) != 0 {
 			t.Errorf("%q: unexpected %+v", line, found)
 		}
@@ -69,6 +81,8 @@ func TestNoFalsePositivesOnPlaceholdersAndPlainText(t *testing.T) {
 		"TOKEN_URL=https://example.com/oauth/token",
 		"// The token is refreshed every hour",
 		"const key = process.env.API_KEY;",
+		"var secretName = regexp.MustCompile(`(?i)(SECRET|TOKEN)`)", // code, not a value
+		`token := getToken(ctx, "refresh")`,
 		"AWS_SECRET=" + "AKIA" + "IOSFODNN7EXAMPLE # envguard:ignore",
 	} {
 		if got := Line("f", 1, line); len(got) != 0 {
