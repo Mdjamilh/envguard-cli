@@ -1,0 +1,31 @@
+version: "2"
+
+linters:
+  enable:
+    - errorlint
+    - gocritic
+    - misspell
+    - nilerr
+    - revive
+    - unconvert
+  settings:
+    errcheck:
+      # Writing to stdout/stderr: if the terminal or pipe is gone there's nothing useful to do.
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+    revive:
+      rules:
+        - name: exported
+          disabled: true # internal packages; doc comments are kept where they help
+  exclusions:
+    rules:
+      # Test helpers write fixtures; a failed write fails the assertion right after.
+      - path: _test\.go
+        linters: [errcheck]
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
