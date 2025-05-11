@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	"github.com/Mdjamilh/envguard-cli/internal/check"
@@ -67,7 +68,7 @@ func run(args []string, stdout, stderr io.Writer, environ []string) int {
 	case "types":
 		code, err = runTypes(rest, stdout)
 	case "version", "--version", "-v":
-		fmt.Fprintf(stdout, "envguard %s\n", version)
+		fmt.Fprintf(stdout, "envguard %s\n", buildVersion())
 	case "help", "--help", "-h":
 		fmt.Fprint(stdout, usage)
 	default:
@@ -341,4 +342,16 @@ func runTypes(args []string, stdout io.Writer) (int, error) {
 	}
 	fmt.Fprintf(stdout, "Wrote %s with %d variables.\n", *out, len(s.Vars))
 	return exitOK, nil
+}
+
+// buildVersion prefers the release version from -ldflags, then the module
+// version Go records for `go install ...@v1.2.3`, then "dev".
+func buildVersion() string {
+	if version != "dev" {
+		return version
+	}
+	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
+		return info.Main.Version
+	}
+	return version
 }
