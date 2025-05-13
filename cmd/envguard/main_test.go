@@ -153,7 +153,7 @@ func TestDiff(t *testing.T) {
 }
 
 func TestInitWritesAnExampleThatChecksTheOriginal(t *testing.T) {
-	project(t, map[string]string{".env": "PORT=8080\nAPI_TOKEN=abc123def456ghi789\n"})
+	project(t, map[string]string{".env": "PORT=8080\nAPI_TOKEN=abc123def456ghi789\n"}) // envguard:ignore (fake token)
 	code, out, stderr := envguard(t, nil, "init")
 	if code != 0 || !strings.Contains(out, "Wrote .env.example with 2 variables") {
 		t.Fatalf("code %d: %s %s", code, out, stderr)
