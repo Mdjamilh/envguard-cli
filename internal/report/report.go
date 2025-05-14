@@ -185,7 +185,11 @@ func (p *Printer) Scan(r ScanResult) error {
 	}
 
 	if len(r.Findings) == 0 && len(r.TrackedEnvs) == 0 {
-		fmt.Fprintf(p.w, "%s No secrets found in %s.\n", p.paint("32", "✓"), r.Root)
+		where := r.Root
+		if where == "." {
+			where = "the current directory"
+		}
+		fmt.Fprintf(p.w, "%s No secrets found in %s.\n", p.paint("32", "✓"), where)
 		return nil
 	}
 	for _, f := range r.TrackedEnvs {
