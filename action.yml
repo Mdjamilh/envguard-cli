@@ -1,0 +1,34 @@
+name: envguard
+description: Check environment variables against an annotated .env.example, and scan for committed secrets.
+branding:
+  icon: shield
+  color: green
+
+inputs:
+  command:
+    description: "check, diff, scan or types"
+    default: check
+  args:
+    description: Extra arguments, for example "--env .env.ci --strict"
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@v6
+      with:
+        go-version: stable
+        cache: false
+    - name: Build envguard
+      shell: bash
+      # Builds the same version of envguard as this action.
+      run: cd "$GITHUB_ACTION_PATH" && go build -o "$RUNNER_TEMP/envguard" ./cmd/envguard
+    - name: Run envguard
+      shell: bash
+      # Inputs go through the environment, not straight into the script.
+      env:
+        ENVGUARD_COMMAND: ${{ inputs.command }}
+        ENVGUARD_ARGS: ${{ inputs.args }}
+      run: |
+        # shellcheck disable=SC2086 # args are meant to be split into words
+        "$RUNNER_TEMP/envguard" "$ENVGUARD_COMMAND" --format github $ENVGUARD_ARGS
