@@ -106,6 +106,58 @@ func TestScanAndDiffOutput(t *testing.T) {
 	}
 }
 
+func TestScanAndDiffMachineFormats(t *testing.T) {
+	findings := ScanResult{Root: ".", TrackedEnvs: []string{"api/.env"}, Findings: []scan.Finding{{File: "a.go", Line: 3, Column: 9, Rule: "Slack token", Match: "xoxb****"}}}
+
+	gh := render(t, GitHub, func(p *Printer) error { return p.Scan(findings) })
+	for _, want := range []string{
+		"::error file=api/.env,title=envguard::This env file is committed to git.",
+		"::error file=a.go,line=3,col=9,title=envguard::Possible secret: Slack token (xoxb****)",
+		"envguard: 1 possible secret, 1 committed env file",
+	} {
+		if !strings.Contains(gh, want) {
+			t.Errorf("missing %q in:\n%s", want, gh)
+		}
+	}
+
+	var parsed struct {
+		OK          bool           `json:"ok"`
+		Findings    []scan.Finding `json:"findings"`
+		TrackedEnvs []string       `json:"trackedEnvFiles"`
+	}
+	if err := json.Unmarshal([]byte(render(t, JSON, func(p *Printer) error { return p.Scan(ScanResult{Root: "."}) })), &parsed); err != nil {
+		t.Fatal(err)
+	}
+	if !parsed.OK || parsed.Findings == nil || parsed.TrackedEnvs == nil {
+		t.Errorf("clean scan JSON should be ok with empty lists: %+v", parsed)
+	}
+
+	d := generate.KeyDiff{OnlyInEnv: []string{"EXTRA"}, OnlyInExample: []string{"MISSING"}}
+	ghDiff := render(t, GitHub, func(p *Printer) error { return p.Diff(".env", ".env.example", d) })
+	if !strings.Contains(ghDiff, "::warning file=.env,title=envguard::MISSING is in .env.example but not in .env") ||
+		!strings.Contains(ghDiff, "::warning file=.env.example,title=envguard::EXTRA is in .env but not documented in .env.example") {
+		t.Errorf("got:\n%s", ghDiff)
+	}
+	jsonDiff := render(t, JSON, func(p *Printer) error { return p.Diff(".env", ".env.example", d) })
+	if !strings.Contains(jsonDiff, `"ok": false`) || !strings.Contains(jsonDiff, `"onlyInExample": [`) {
+		t.Errorf("got %s", jsonDiff)
+	}
+	if same := render(t, Text, func(p *Printer) error { return p.Diff("a", "b", generate.KeyDiff{}) }); same != "✓ a and b define the same variables.\n" {
+		t.Errorf("got %q", same)
+	}
+}
+
+func TestColorOnlyForTerminals(t *testing.T) {
+	p := &Printer{format: Text, color: true}
+	if got := p.paint("31", "x"); got != "\x1b[31mx\x1b[0m" {
+		t.Errorf("got %q", got)
+	}
+	var buf bytes.Buffer
+	if New(&buf, Text).color {
+		t.Error("a buffer is not a terminal")
+	}
+}
+
 func TestParseFormat(t *testing.T) {
 	if _, err := ParseFormat("yaml"); err == nil {
 		t.Error("yaml should be rejected")
