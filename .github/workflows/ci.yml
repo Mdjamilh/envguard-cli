@@ -35,7 +35,9 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - run: go vet ./...
+      # bash on every OS: PowerShell splits "-coverprofile=coverage.out" at the dot.
       - run: go test -race -coverprofile=coverage.out ./...
+        shell: bash
       - name: Coverage summary
         if: matrix.os == 'ubuntu-latest' && matrix.go == 'stable'
         run: go tool cover -func=coverage.out | tail -1
