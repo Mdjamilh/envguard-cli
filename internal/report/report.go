@@ -223,11 +223,15 @@ func (p *Printer) Diff(envFile, exampleFile string, d generate.KeyDiff) error {
 		fmt.Fprintf(p.w, "%s %s and %s define the same variables.\n", p.paint("32", "✓"), envFile, exampleFile)
 		return nil
 	}
+	width := 0
+	for _, k := range append(append([]string{}, d.OnlyInExample...), d.OnlyInEnv...) {
+		width = max(width, len(k))
+	}
 	for _, k := range d.OnlyInExample {
-		fmt.Fprintf(p.w, "%s %s  missing from %s\n", p.paint("31", "-"), p.paint("1", k), envFile)
+		fmt.Fprintf(p.w, "%s %s  missing from %s\n", p.paint("31", "-"), p.paint("1", fmt.Sprintf("%-*s", width, k)), envFile)
 	}
 	for _, k := range d.OnlyInEnv {
-		fmt.Fprintf(p.w, "%s %s  not documented in %s\n", p.paint("33", "+"), p.paint("1", k), exampleFile)
+		fmt.Fprintf(p.w, "%s %s  not documented in %s\n", p.paint("33", "+"), p.paint("1", fmt.Sprintf("%-*s", width, k)), exampleFile)
 	}
 	return nil
 }

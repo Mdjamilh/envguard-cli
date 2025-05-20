@@ -101,7 +101,7 @@ func TestScanAndDiffOutput(t *testing.T) {
 	diff := render(t, Text, func(p *Printer) error {
 		return p.Diff(".env", ".env.example", generate.KeyDiff{OnlyInEnv: []string{"EXTRA"}, OnlyInExample: []string{"MISSING"}})
 	})
-	if diff != "- MISSING  missing from .env\n+ EXTRA  not documented in .env.example\n" {
+	if diff != "- MISSING  missing from .env\n+ EXTRA    not documented in .env.example\n" {
 		t.Errorf("got %q", diff)
 	}
 }

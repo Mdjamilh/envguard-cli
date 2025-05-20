@@ -147,7 +147,7 @@ func TestDiff(t *testing.T) {
 	}
 	os.WriteFile(".env", []byte("DATABASE_URL=x\nSURPRISE=1\n"), 0o644)
 	code, out, _ := envguard(t, nil, "diff")
-	if code != 1 || !strings.Contains(out, "PORT  missing from .env") || !strings.Contains(out, "SURPRISE  not documented") {
+	if code != 1 || !strings.Contains(out, "PORT      missing from .env") || !strings.Contains(out, "SURPRISE  not documented") {
 		t.Errorf("code %d:\n%s", code, out)
 	}
 }
