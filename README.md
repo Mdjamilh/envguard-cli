@@ -144,7 +144,7 @@ envguard check --process --format json   # in a container, before the app starts
 
 Matches are always shown redacted, for example `ghp_************`. To mark a false positive, add `envguard:ignore` on the same line. `node_modules`, `.git`, `vendor`, build output, binary files and files over 1 MB are skipped.
 
-envguard runs `scan` on its own repository in CI. The first run found six false positives, which shaped the rules above.
+envguard runs `scan` on its own repository in CI. The first run flagged six lines: regular expressions, development connection strings, and fake tokens in tests. That shaped the rules above. The fake tokens now carry `envguard:ignore`.
 
 ## How it reads .env files
 
