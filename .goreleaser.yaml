@@ -22,6 +22,16 @@ checksum:
   name_template: checksums.txt
 
 changelog:
-  use: github
+  use: git
+  abbrev: 7
+  sort: asc
+  groups:
+    - title: Features
+      regexp: '^feat(\(.+\))?!?:'
+      order: 0
+    - title: Fixes
+      regexp: '^fix(\(.+\))?!?:'
+      order: 1
   filters:
-    exclude: ["^docs:", "^test:", "^chore:", "^ci:"]
+    # Conventional commit types that don't change what users get.
+    exclude: ['^(docs|test|chore|ci|refactor|style|build)(\(.+\))?:']
