@@ -1,0 +1,16 @@
+# Hooks for https://pre-commit.com. See the README for usage.
+- id: envguard-scan
+  name: envguard scan
+  description: Block commits that contain secrets or real .env files.
+  entry: envguard scan
+  language: golang
+  pass_filenames: false
+  always_run: true
+
+- id: envguard-diff
+  name: envguard diff
+  description: Fail when .env and .env.example define different variables.
+  entry: envguard diff
+  language: golang
+  pass_filenames: false
+  files: (^|/)\.env(\.example)?$
