@@ -80,7 +80,7 @@ Any other comment lines become the variable's description, which is included in 
 |---|---|---|
 | `check` | Validates values against the schema | Any error (or warning, with `--strict`) |
 | `diff` | Lists keys that are in only one of `.env` and `.env.example` | The files differ |
-| `scan [dir]` | Looks for secrets in files, and for `.env` files committed to git | Anything is found |
+| `scan [dir]` | Looks for secrets in files, and for `.env` files tracked by git | Anything is found |
 | `init` | Writes `.env.example` from `.env`. Won't overwrite without `--force` | Never |
 | `types` | Prints or writes a TypeScript `env.d.ts` for `process.env` | Never |
 

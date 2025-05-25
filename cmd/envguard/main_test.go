@@ -199,7 +199,7 @@ func TestScanFindsCommittedEnvFiles(t *testing.T) {
 		}
 	}
 	code, out, _ := envguard(t, nil, "scan", "--format", "github")
-	if code != 1 || !strings.Contains(out, "::error file=.env,title=envguard::This env file is committed to git") {
+	if code != 1 || !strings.Contains(out, "::error file=.env,title=envguard::This env file is tracked by git") {
 		t.Errorf("code %d:\n%s", code, out)
 	}
 }

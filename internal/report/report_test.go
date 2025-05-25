@@ -89,7 +89,7 @@ func TestScanAndDiffOutput(t *testing.T) {
 	scanText := render(t, Text, func(p *Printer) error {
 		return p.Scan(ScanResult{Root: ".", TrackedEnvs: []string{".env"}, Findings: []scan.Finding{{File: "src/a.ts", Line: 2, Column: 7, Rule: "GitHub token", Match: "ghp_****"}}})
 	})
-	for _, want := range []string{".env is committed to git", "git rm --cached .env", "src/a.ts:2:7  GitHub token  ghp_****", "1 possible secret, 1 committed env file"} {
+	for _, want := range []string{".env is tracked by git", "git rm --cached .env", "src/a.ts:2:7  GitHub token  ghp_****", "1 possible secret, 1 tracked env file"} {
 		if !strings.Contains(scanText, want) {
 			t.Errorf("missing %q in:\n%s", want, scanText)
 		}
@@ -111,9 +111,9 @@ func TestScanAndDiffMachineFormats(t *testing.T) {
 
 	gh := render(t, GitHub, func(p *Printer) error { return p.Scan(findings) })
 	for _, want := range []string{
-		"::error file=api/.env,title=envguard::This env file is committed to git.",
+		"::error file=api/.env,title=envguard::This env file is tracked by git.",
 		"::error file=a.go,line=3,col=9,title=envguard::Possible secret: Slack token (xoxb****)",
-		"envguard: 1 possible secret, 1 committed env file",
+		"envguard: 1 possible secret, 1 tracked env file",
 	} {
 		if !strings.Contains(gh, want) {
 			t.Errorf("missing %q in:\n%s", want, gh)

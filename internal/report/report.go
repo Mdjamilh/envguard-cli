@@ -175,12 +175,12 @@ func (p *Printer) Scan(r ScanResult) error {
 		}{len(r.Findings) == 0 && len(r.TrackedEnvs) == 0, r})
 	case GitHub:
 		for _, f := range r.TrackedEnvs {
-			fmt.Fprintf(p.w, "::error file=%s,title=envguard::%s\n", escapeProperty(f), escapeData("This env file is committed to git. Remove it with `git rm --cached` and add it to .gitignore."))
+			fmt.Fprintf(p.w, "::error file=%s,title=envguard::%s\n", escapeProperty(f), escapeData("This env file is tracked by git. Remove it with `git rm --cached` and add it to .gitignore."))
 		}
 		for _, f := range r.Findings {
 			fmt.Fprintf(p.w, "::error file=%s,line=%d,col=%d,title=envguard::%s\n", escapeProperty(f.File), f.Line, f.Column, escapeData("Possible secret: "+f.Rule+" ("+f.Match+")"))
 		}
-		fmt.Fprintf(p.w, "envguard: %s, %s\n", plural(len(r.Findings), "possible secret"), plural(len(r.TrackedEnvs), "committed env file"))
+		fmt.Fprintf(p.w, "envguard: %s, %s\n", plural(len(r.Findings), "possible secret"), plural(len(r.TrackedEnvs), "tracked env file"))
 		return nil
 	}
 
@@ -193,12 +193,12 @@ func (p *Printer) Scan(r ScanResult) error {
 		return nil
 	}
 	for _, f := range r.TrackedEnvs {
-		fmt.Fprintf(p.w, "%s %s is committed to git\n    remove it with: git rm --cached %s\n", p.paint("31", "✗"), p.paint("1", f), f)
+		fmt.Fprintf(p.w, "%s %s is tracked by git\n    remove it with: git rm --cached %s\n", p.paint("31", "✗"), p.paint("1", f), f)
 	}
 	for _, f := range r.Findings {
 		fmt.Fprintf(p.w, "%s %s  %s  %s\n", p.paint("31", "✗"), p.paint("1", fmt.Sprintf("%s:%d:%d", f.File, f.Line, f.Column)), f.Rule, p.paint("2", f.Match))
 	}
-	fmt.Fprintf(p.w, "\n%s, %s. Mark a false positive with an envguard:ignore comment.\n", plural(len(r.Findings), "possible secret"), plural(len(r.TrackedEnvs), "committed env file"))
+	fmt.Fprintf(p.w, "\n%s, %s. Mark a false positive with an envguard:ignore comment.\n", plural(len(r.Findings), "possible secret"), plural(len(r.TrackedEnvs), "tracked env file"))
 	return nil
 }
 

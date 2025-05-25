@@ -249,7 +249,7 @@ func runDiff(args []string, stdout io.Writer) (int, error) {
 
 func runScan(args []string, stdout io.Writer) (int, error) {
 	fs, format := newFlags("scan")
-	noGit := fs.Bool("no-git", false, "skip checking for .env files committed to git")
+	noGit := fs.Bool("no-git", false, "skip checking for .env files tracked by git")
 	if err := parseFlags(fs, args); err != nil {
 		return 0, err
 	}
