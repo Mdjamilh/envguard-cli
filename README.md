@@ -119,12 +119,12 @@ Every command takes `--format json` for scripts, or `--format github` for annota
 With GitHub Actions:
 
 ```yaml
-- uses: Mdjamilh/envguard-cli@v0.1.0
+- uses: Mdjamilh/envguard-cli@v0.1.1
   with:
     command: check
     args: --env .env.ci --strict
 
-- uses: Mdjamilh/envguard-cli@v0.1.0
+- uses: Mdjamilh/envguard-cli@v0.1.1
   with:
     command: scan
 ```
@@ -135,7 +135,7 @@ Before every commit, with [pre-commit](https://pre-commit.com):
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/Mdjamilh/envguard-cli
-    rev: v0.1.0
+    rev: v0.1.1
     hooks:
       - id: envguard-scan
       - id: envguard-diff
