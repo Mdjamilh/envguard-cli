@@ -129,6 +129,18 @@ With GitHub Actions:
     command: scan
 ```
 
+Before every commit, with [pre-commit](https://pre-commit.com):
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/Mdjamilh/envguard-cli
+    rev: v0.1.0
+    hooks:
+      - id: envguard-scan
+      - id: envguard-diff
+```
+
 Elsewhere, run the binary and rely on the exit code:
 
 ```bash
